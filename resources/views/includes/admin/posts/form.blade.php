@@ -81,8 +81,8 @@
             <label class="form-check-label" for="is_published">pubblicato</label>
         </div>
     </div>
-</div>
-<hr>
+</div> 
+<hr> 
 <footer class="d-flex justify-content-between">
     <a href="{{ route('admin.posts.index') }}"class="btn btn-secondary">
         <i class="fa-solid fa-rotate-left mr-2"></i> Indietro

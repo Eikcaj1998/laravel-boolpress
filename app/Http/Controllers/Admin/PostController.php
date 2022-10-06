@@ -5,10 +5,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Models\Post;
+use App\User;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use App\Mail\PostPublicationMail;
+
 
 
 class PostController extends Controller
@@ -76,6 +80,16 @@ class PostController extends Controller
             $post->image = $image_url;
         }
         $post->save();
+
+        if($post->is_published){
+            $mail = new PostPublicationMail($post);  
+            $mail_addresses = User::where('id','<>',$post->user_id)->limit(3)->pluck('email')->toArray();
+            foreach($mail_addresses as $mail_address){
+                Mail::to($mail_address)->send($mail); 
+
+            }
+        };
+
         return redirect()->route('admin.posts.show', $post)
        ->with('message', 'Post creato con successo')
        ->with('type', 'success');
