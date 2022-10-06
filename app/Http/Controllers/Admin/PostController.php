@@ -8,6 +8,8 @@ use App\Models\Post;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+
 
 class PostController extends Controller
 {
@@ -49,7 +51,7 @@ class PostController extends Controller
         $request->validate([
             'title' => 'required|string|min:5|max:50|unique:posts',
             'content' => 'required|string',
-            'image' => 'nullable|url',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png',
             'category_id'=>'nullable|exists:categories,id'
         ],
         [
@@ -58,7 +60,7 @@ class PostController extends Controller
             'title.min'=>'il Titolo deve avere almeno :min caratteri',
             'title.max'=>'il Titolo deve avere almeno :max caratteri',
             'title.unique'=>"Esiste già un post dal titolo $request->title",
-            'image.url'=>'Url dell\'immagine non valida',
+            'image.mimes'=>'le immagini ammesse sono solo in formato .jpeg, .jpg o .png',
             'categy_id.exists'=>'Non esiste una categoria associabile',
         ]);
 
@@ -69,7 +71,10 @@ class PostController extends Controller
         $post->is_published = array_key_exists('is_published',$data);
         $current_user= Auth::user();
         $post->user_id = $current_user->id;
-
+        if(array_key_exists('image',$data)){
+            $image_url = Storage::put('posts',$data['image']);
+            $post->image = $image_url;
+        }
         $post->save();
         return redirect()->route('admin.posts.show', $post)
        ->with('message', 'Post creato con successo')
@@ -116,7 +121,7 @@ class PostController extends Controller
         $request->validate([
             'title' => ['required','string','min:5','max:50', Rule::unique('posts')->ignore($post->id)],
             'content' => 'required|string',
-            'image' => 'nullable|url',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png',
             'category_id'=> 'nullable|exists:categories,id'
         ],
         [
@@ -124,7 +129,7 @@ class PostController extends Controller
             'content.required'=>'il contenuto e obbligatorio',
             'title.min'=>'il Titolo deve avere almeno :min caratteri',
             'title.unique'=>"Esiste già un post dal titolo $request->title",
-            'image.url'=>'Url dell\'immagine non valida',
+            'image.mimes'=>'le immagini ammesse sono solo in formato .jpeg, .jpg o .png',
             'category_id'=>'Non esiste una categoria associabile'
         ]);
 
@@ -134,6 +139,10 @@ class PostController extends Controller
         $data['is_published'] = array_key_exists('is_published',$data);
 
         $post->update($data);
+        if(array_key_exists('image',$data)){
+            $image_url = Storage::put('posts',$data['image']);
+            $post->image = $image_url;
+        }
         $post->save();
         return redirect()->route('admin.posts.show', $post)
        ->with('message', 'Post modificato con successo')
@@ -149,12 +158,13 @@ class PostController extends Controller
     public function destroy(Post $post)
     {
 
-        if(count($post->tags)) $post->tags()->detach();
+        
         if ($post->user_id !== Auth::id()) {
             return redirect()->route('admin.posts.index')
             ->with('message', "Non sei autorizzato ad eliminare questo post")
             ->with('type', "warning");
         }
+        if($post->image)Storage::delete($post->image);
        $post->delete();
        return redirect()->route('admin.posts.index')
        ->with('message', 'il post e stato eliminato con successo')

@@ -8,10 +8,10 @@
     </div>
 @endif
 @if ($post->exists)
-    <form action="{{ route('admin.posts.update', $post) }}" method="POST" novalidate>
+    <form action="{{ route('admin.posts.update', $post) }}" enctype="multipart/form-data" method="POST" novalidate>
         @method('PUT')
     @else
-        <form action="{{ route('admin.posts.store') }}" method="POST" novalidate>
+        <form action="{{ route('admin.posts.store') }}" enctype="multipart/form-data" method="POST" novalidate>
 @endif
 
 @csrf
@@ -59,9 +59,9 @@
     </div>
     <div class="col-11">
         <div class="form-group">
-            <label for="image">Immagine</label>
-            <input type="url" class="form-control @error('image') is-invalid @enderror" id="image-field"
-                name="image" value="{{ old('image', $post->image) }}">
+            <label for="image">Immagine</label><br/>
+            <input type="file" class=" @error('image') is-invalid @enderror" id="image-field"
+                name="image">
             @error('image')
                 <div class="invalid-feedback">
                     {{ $message }}
@@ -71,8 +71,8 @@
     </div>
     <div class="col-1">
         <img id="preview"
-            src="{{ $post->image ?? 'https://socialistmodernism.com/wp-content/uploads/2017/07/placeholder-image.png' }}"
-            alt="post image preview" class="img-fluid">
+            src="{{ $post->image ? asset('storage/'.$post->image) :'https://socialistmodernism.com/wp-content/uploads/2017/07/placeholder-image.png' }}"
+            alt="{{$post->image ? $post->title : 'placeholder'}}" class="img-fluid">
     </div>
     <div class="col-12 d-flex justify_content-between">
         <div class="form-group form-check">
